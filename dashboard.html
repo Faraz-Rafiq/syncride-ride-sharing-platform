@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SyncRide Premium</title>
+    <link rel="stylesheet" href="styles/index.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0b1120 0%, #0f172a 100%);
+            overflow-x: hidden;
+        }
+
+        .dashboard-wrapper {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Animated Sidebar */
+        .sidebar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-brand:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(56, 189, 248, 0.3);
+            transform: scale(1.02);
+        }
+
+        .sidebar-brand span {
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .sidebar-brand img {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #94a3b8;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            box-shadow: inset 4px 0 0 #38bdf8;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 3rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .main-content::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 60%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vh;
+            background: url('images/logo.png') no-repeat center;
+            background-size: contain;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: -1;
+            filter: grayscale(1) brightness(2);
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .user-greeting {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #38bdf8, #2dd4bf);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(45,212,191,0.2));
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Widget Grid */
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .widget-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .widget-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Improved Dropdown Styling */
+        select {
+            background-color: #1e293b !important;
+            color: white !important;
+        }
+
+        option {
+            background-color: #1e293b !important;
+            color: white !important;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating Blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: #4f46e5;
+            top: -100px;
+            left: -100px;
+            animation: float 10s infinite alternate;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: #06b6d4;
+            bottom: -50px;
+            right: -50px;
+            animation: float 8s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <img src="images/logo.png" alt="SyncRide"> <span>SyncRide</span>
+            </div>
+            
+            <div class="nav-item active" data-view="overview">
+                <i class="fas fa-th-large" style="color: #06b6d4;"></i> Dashboard
+            </div>
+            <div class="nav-item" data-view="request-ride">
+                <i class="fas fa-plus-circle" style="color: #4f46e5;"></i> Create Ride Request
+            </div>
+            <div class="nav-item" data-view="my-rides">
+                <i class="fas fa-history" style="color: #f59e0b;"></i> My Rides & History
+            </div>
+            <div class="nav-item" data-view="nearby-groups">
+                <i class="fas fa-users" style="color: #10b981;"></i> Nearby Groups
+            </div>
+            <div class="nav-item" data-view="payments">
+                <i class="fas fa-wallet" style="color: #38bdf8;"></i> Wallet & Payments
+            </div>
+            <div class="nav-item" data-view="saved-routes">
+                <i class="fas fa-star" style="color: #fbbf24;"></i> Favorite Routes
+            </div>
+            <div class="nav-item" data-view="emergency">
+                <i class="fas fa-exclamation-triangle" style="color: #f43f5e;"></i> Emergency Contacts
+            </div>
+            <div class="nav-item" data-view="settings">
+                <i class="fas fa-user-cog" style="color: #94a3b8;"></i> Profile Settings
+            </div>
+            <div style="flex-grow: 1;"></div>
+            <div class="nav-item" id="logoutBtn" style="color: #ef4444;">
+                <i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> Logout
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="user-greeting">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div>
+                        <h1 class="text-gradient animate-fade-in" id="welcomeGreeting">Welcome back, <span id="userNameDisplay">User</span> 👋</h1>
+            <p class="text-secondary" style="margin-bottom: 2rem;">Your smart ride is waiting in Lahore.</p>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="switchView('request-ride')">Book Ride Now</button>
+                    <button class="btn btn-secondary" onclick="showNotifications()" style="margin-left:10px;">🔔 Notifications</button>
+                </div>
+            </div>
+
+            <!-- VIEW: OVERVIEW -->
+            <section id="overview" class="view-section active">
+                <div class="hero-banner">
+                    <h1 class="text-gradient" style="font-size: 2.5rem; margin-bottom: 1rem;">Lahore's Elite Ride Sharing</h1>
+                    <p>Save up to 40% on fares by syncing your rides across DHA, Gulberg, and Bahria Town.</p>
+                </div>
+
+                <div class="widget-grid">
+                    <div class="widget-card">
+                        <h3 style="color:#06b6d4; margin-bottom:1rem;">Live Activity</h3>
+                        <div style="font-size: 2.5rem; font-weight: 800;">24</div>
+                        <p class="text-secondary">Active rides forming nearby</p>
+                    </div>
+                    <div class="widget-card">
+                        <h3 style="color:#10b981; margin-bottom:1rem;">Money Saved</h3>
+                        <div style="font-size: 2.5rem; font-weight: 800;">Rs. 4,250</div>
+                        <p class="text-secondary">Total savings this month</p>
+                    </div>
+                    <div class="widget-card">
+                        <h3 style="color:#f59e0b; margin-bottom:1rem;">Carbon Offset</h3>
+                        <div style="font-size: 2.5rem; font-weight: 800;">12 kg</div>
+                        <p class="text-secondary">CO2 emissions saved</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: REQUEST RIDE & FARE ESTIMATOR -->
+            <section id="request-ride" class="view-section">
+                <div class="widget-card" style="max-width: 600px; margin: 0 auto;">
+                    <h2 class="text-gradient">Create Request & Estimate Fare</h2>
+                    <form id="rideRequestForm" style="margin-top: 2rem;">
+                        <div class="form-group">
+                            <label>Pickup Location (Lahore)</label>
+                            <select id="source" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Destination Location (Lahore)</label>
+                            <select id="destination" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender Availability / Preference</label>
+                            <select id="genderPreference" class="form-control">
+                                <option value="None">No Preference (Open to All)</option>
+                                <option value="MaleOnly">Male Only Ride</option>
+                                <option value="FemaleOnly">Female Only Ride</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Departure Time</label>
+                            <input type="datetime-local" id="time" class="form-control" required>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center;">
+                            <h4 style="color: #06b6d4;">Estimated Fare (Total for Route)</h4>
+                            <h2 id="fareEstimateDisplay">Rs. 0</h2>
+                            <p id="perPersonFare" class="text-secondary" style="font-size: 0.9rem; margin-top: 5px;">Join a group to divide this cost!</p>
+                        </div>
+
+                        <div style="display: flex; gap: 15px;">
+                            <button type="button" class="btn btn-secondary" onclick="estimateFare()" style="flex: 1;">Estimate Fare</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 2;">Auto-Match Group</button>
+                        </div>
+                        <div id="requestMsg" style="margin-top:15px; text-align:center;"></div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- VIEW: MY RIDES -->
+            <section id="my-rides" class="view-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 class="text-gradient">Ride History & Status</h2>
+                    <button class="btn btn-secondary" onclick="exportTableToCSV('ridesHistoryTable', 'SyncRide_MyHistory.csv')">
+                        <i class="fas fa-file-excel"></i> Export to Excel
+                    </button>
+                </div>
+                <div class="widget-card">
+                    <table class="table" id="ridesHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Route</th>
+                                <th>Status</th>
+                                <th>Total Fare</th>
+                                <th>Your Share</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- VIEW: NEARBY GROUPS -->
+            <section id="nearby-groups" class="view-section">
+                <h2 class="text-gradient" style="margin-bottom: 2rem;">Nearby Ride Groups</h2>
+                <div class="widget-card">
+                    <p class="text-secondary" style="margin-bottom: 1.5rem;">Scanning active routes in Lahore...</p>
+                    <div id="nearbyGroupsList">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: PAYMENTS -->
+            <section id="payments" class="view-section">
+                <h2 class="text-gradient" style="margin-bottom: 2rem;">Wallet & Payments</h2>
+                <div class="widget-grid">
+                    <div class="widget-card">
+                        <h3>Current Balance</h3>
+                        <h1 style="color: #10b981;" id="walletBalanceDisplay">Rs. 0.00</h1>
+                        <button class="btn btn-primary" style="margin-top: 15px; width: 100%;" onclick="alert('Payment Gateway coming soon!')">Top Up Wallet</button>
+                    </div>
+                    <div class="widget-card">
+                        <h3>Payment Methods</h3>
+                        <p>💳 Visa ending in 4242</p>
+                        <p>📱 EasyPaisa linked</p>
+                        <button class="btn btn-secondary" style="margin-top: 15px; width: 100%;">Add Method</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: SAVED ROUTES -->
+            <section id="saved-routes" class="view-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 class="text-gradient">Favorite Routes</h2>
+                    <button class="btn btn-primary" onclick="showAddFavoriteModal()">+ Add New</button>
+                </div>
+                <div class="widget-card" id="favoritesList">
+                    <!-- Populated via JS -->
+                </div>
+            </section>
+
+            <!-- VIEW: EMERGENCY -->
+            <section id="emergency" class="view-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 class="text-gradient">Emergency Contacts</h2>
+                    <button class="btn btn-primary" onclick="showAddEmergencyModal()">+ Add New</button>
+                </div>
+                <div class="widget-card">
+                    <p class="text-secondary" style="margin-bottom: 1.5rem;">Your linked contacts will automatically receive your live location when you trigger an SOS.</p>
+                    <div id="emergencyContactsList">
+                        <!-- Populated via JS -->
+                    </div>
+                    <button class="btn btn-secondary" style="margin-top: 30px; background: #ef4444; color: white; border-color: #ef4444; width: 100%;" onclick="alert('SOS Triggered! Location sent to emergency contacts.')">🚨 Trigger SOS</button>
+                </div>
+            </section>
+
+            <section id="settings" class="view-section">
+                <h2 class="text-gradient" style="margin-bottom: 2rem;">Profile Settings</h2>
+                <div class="widget-card" style="max-width: 600px;">
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="profileName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" id="profilePhone" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select id="profileGender" class="form-control">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 15px;">Save Changes</button>
+                    </form>
+                    <div id="profileMsg" style="margin-top:15px; text-align:center;"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="scripts/api.js"></script>
+    <script>
+        // Tab Switching Logic
+        function switchView(viewId) {
+            console.log('Switching to view:', viewId);
+            
+            // Hide all sections
+            const sections = document.querySelectorAll('.view-section');
+            sections.forEach(s => s.classList.remove('active'));
+            
+            // Deactivate all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(n => n.classList.remove('active'));
+            
+            // Show target section
+            const target = document.getElementById(viewId);
+            if (target) {
+                target.classList.add('active');
+            }
+            
+            // Highlight the correct nav item
+            const activeNavItem = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+            
+            // Trigger data loads
+            if(viewId === 'my-rides') loadHistory();
+            if(viewId === 'nearby-groups') loadNearbyGroups();
+            if(viewId === 'payments') loadWallet();
+            if(viewId === 'settings') loadProfileSettings();
+            if(viewId === 'saved-routes') loadFavorites();
+            if(viewId === 'emergency') loadEmergencyContacts();
+        }
+
+        // Add Event Listeners for Nav Items
+        document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+            item.addEventListener('click', () => {
+                const viewId = item.getAttribute('data-view');
+                switchView(viewId);
+            });
+        });
+
+        // Logout Logic
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    await API.logout();
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Initialize User Data
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await API.getProfile();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Set User Greeting
+            const firstName = user.FullName.split(' ')[0];
+            document.getElementById('userNameDisplay').innerText = firstName;
+            document.getElementById('userAvatar').innerText = firstName[0].toUpperCase();
+
+            // Prefill Profile
+            document.getElementById('profileName').value = user.FullName;
+            document.getElementById('profilePhone').value = user.Phone;
+            document.getElementById('profileGender').value = user.Gender;
+
+            // Load Lahore Locations
+            const locations = await API.getLocations();
+            const srcSelect = document.getElementById('source');
+            const destSelect = document.getElementById('destination');
+            
+            locations.forEach(loc => {
+                const opt1 = new Option(loc.Name, loc.LocationID);
+                const opt2 = new Option(loc.Name, loc.LocationID);
+                srcSelect.add(opt1);
+                destSelect.add(opt2);
+            });
+        });
+
+        // Fare Estimation Mock
+        function estimateFare() {
+            const src = document.getElementById('source').value;
+            const dest = document.getElementById('destination').value;
+            if(!src || !dest) return;
+            
+            const baseFare = 600; // Adjusted for Lahore routes
+            const multiplier = Math.floor(Math.random() * 3) + 1;
+            const total = baseFare * multiplier;
+            
+            document.getElementById('fareEstimateDisplay').innerText = `Rs. ${total}`;
+            document.getElementById('perPersonFare').innerText = `Est. Rs. ${(total/4).toFixed(2)} per person (if group of 4)`;
+        }
+
+        // Ride Request
+        document.getElementById('rideRequestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const source = document.getElementById('source').value;
+            const dest = document.getElementById('destination').value;
+            const genderPref = document.getElementById('genderPreference').value;
+            let time = document.getElementById('time').value;
+
+            if (time.includes('T')) {
+                time = time.replace('T', ' ') + ':00';
+            }
+
+            const res = await API.createRideRequest(source, dest, time, genderPref);
+            const msgEl = document.getElementById('requestMsg');
+            if (res.error) {
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = res.error;
+            } else {
+                msgEl.style.color = '#10b981';
+                msgEl.innerText = res.message + " You will be redirected to history.";
+                setTimeout(() => switchView('my-rides'), 2000);
+            }
+        });
+
+        // Load History
+        async function loadHistory() {
+            const rides = await API.getRideHistory();
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+            
+            if (rides.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No rides found.</td></tr>';
+                return;
+            }
+
+            rides.forEach(ride => {
+                const total = parseFloat(ride.TotalFare || 0);
+                const members = parseInt(ride.MemberCount || 1);
+                const share = (total / members).toFixed(2);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(ride.ExpectedTime).toLocaleString()}</td>
+                    <td>${ride.SourceName} -> ${ride.DestName}</td>
+                    <td><span class="badge ${ride.GroupStatus === 'Completed' ? 'badge-success' : 'badge-warning'}">${ride.RequestStatus}</span></td>
+                    <td>Rs. ${total}</td>
+                    <td style="color: #10b981; font-weight: bold;">Rs. ${share}</td>
+                    <td>
+                        ${ride.RequestStatus !== 'Cancelled' ? `<button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; background: #ef4444;" onclick="cancelRide(${ride.RequestID})">Cancel</button>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function cancelRide(requestId) {
+            if(!confirm('Are you sure you want to cancel this ride?')) return;
+            const res = await API.cancelRide(requestId);
+            alert(res.message || res.error);
+            loadHistory();
+        }
+
+        async function loadWallet() {
+            const balance = await API.getWallet();
+            document.getElementById('walletBalanceDisplay').innerText = `Rs. ${balance.toLocaleString()}`;
+        }
+
+        async function loadProfileSettings() {
+            const user = await API.getProfile();
+            if(user) {
+                document.getElementById('profileName').value = user.FullName;
+                document.getElementById('profilePhone').value = user.Phone;
+                document.getElementById('profileGender').value = user.Gender;
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('profileName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const gender = document.getElementById('profileGender').value;
+            
+            const res = await API.updateProfile({ fullName, phone, gender });
+            const msg = document.getElementById('profileMsg');
+            msg.innerText = res.message || res.error;
+            msg.style.color = res.error ? '#ef4444' : '#10b981';
+        });
+
+        async function loadNearbyGroups() {
+            const groups = await API.getFormingGroups();
+            const list = document.getElementById('nearbyGroupsList');
+            list.innerHTML = '';
+            
+            if (groups.length === 0) {
+                list.innerHTML = '<p class="text-center text-secondary">No active ride groups forming nearby right now.</p>';
+                return;
+            }
+
+            groups.forEach(group => {
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 20px; background: rgba(6,182,212,0.1); border-radius: 10px; border-left: 4px solid #06b6d4; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;';
+                div.innerHTML = `
+                    <div>
+                        <strong>Route:</strong> ${group.Source} -> ${group.Destination} <br>
+                        <strong>Time:</strong> ${new Date(group.DepartureTime).toLocaleString()} <br>
+                        <strong>Members:</strong> ${group.MemberCount} joined
+                    </div>
+                    <button class="btn btn-primary" onclick="joinGroup(${group.GroupID})">Join Group</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function joinGroup(groupId) {
+            const res = await API.joinGroup(groupId);
+            alert(res.message || res.error);
+            if(!res.error) switchView('my-rides');
+        }
+
+        async function showNotifications() {
+            const notifications = await API.getNotifications();
+            let msg = notifications.map(n => n.message).join('\n\n');
+            alert('Your Notifications:\n\n' + (msg || 'No new notifications.'));
+        }
+
+        async function loadFavorites() {
+            const favorites = await API.getFavorites();
+            const list = document.getElementById('favoritesList');
+            list.innerHTML = '';
+            
+            if (favorites.length === 0) {
+                list.innerHTML = '<p class="text-center text-secondary">No favorite routes saved yet.</p>';
+                return;
+            }
+
+            favorites.forEach(fav => {
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 0;';
+                div.innerHTML = `
+                    <div>
+                        <h4>${fav.Name}</h4>
+                        <p class="text-secondary">${fav.LocationName}</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" style="padding: 5px 15px;" onclick="quickBook(${fav.LocationID})">Book</button>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; background: #ef4444;" onclick="deleteFavorite(${fav.SavedID})">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function showAddFavoriteModal() {
+            const name = prompt('Enter a name for this favorite (e.g., Home, Work):');
+            if(!name) return;
+            const locId = prompt('Enter Location ID (1-13 for Lahore areas):');
+            if(!locId) return;
+            const res = await API.addFavorite(name, locId);
+            alert(res.message || res.error);
+            loadFavorites();
+        }
+
+        async function deleteFavorite(savedId) {
+            if(!confirm('Delete this favorite?')) return;
+            const res = await API.deleteFavorite(savedId);
+            loadFavorites();
+        }
+
+        async function loadEmergencyContacts() {
+            const contacts = await API.getEmergencyContacts();
+            const list = document.getElementById('emergencyContactsList');
+            list.innerHTML = '';
+            
+            if (contacts.length === 0) {
+                list.innerHTML = '<p class="text-center text-secondary">No emergency contacts added yet.</p>';
+                return;
+            }
+
+            contacts.forEach(c => {
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;';
+                div.innerHTML = `
+                    <div>
+                        <h4>${c.ContactName} (${c.Relation})</h4>
+                        <p class="text-secondary">${c.PhoneNumber}</p>
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 5px 10px; background: #ef4444;" onclick="deleteContact(${c.ContactID})">🗑️</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function showAddEmergencyModal() {
+            const name = prompt('Enter Contact Name:');
+            if(!name) return;
+            const phone = prompt('Enter Phone Number:');
+            if(!phone) return;
+            const relation = prompt('Enter Relation (e.g., Brother, Friend):');
+            if(!relation) return;
+            const res = await API.addEmergencyContact(name, phone, relation);
+            alert(res.message || res.error);
+            loadEmergencyContacts();
+        }
+
+        async function deleteContact(id) {
+            if(!confirm('Delete this contact?')) return;
+            const res = await API.deleteEmergencyContact(id);
+            loadEmergencyContacts();
+        }
+
+        function quickBook(locId) {
+            switchView('request-ride');
+            document.getElementById('destination').value = locId;
+        }
+
+        // --- PROFESSIONAL EXCEL EXPORT (Real .xlsx file, no warnings, auto-sized) ---
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            
+            // Create a copy of the table to remove the 'Action' column (which contains buttons)
+            const tableClone = table.cloneNode(true);
+            const actionCols = tableClone.querySelectorAll('th:last-child, td:last-child');
+            actionCols.forEach(col => col.remove());
+
+            const wb = XLSX.utils.table_to_book(tableClone, { sheet: "SyncRide Data" });
+            
+            // Generate real .xlsx file
+            XLSX.writeFile(wb, filename.replace('.csv', '.xlsx'));
+        }
+    </script>
+</body>
+</html>

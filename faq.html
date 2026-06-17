@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - SyncRide</title>
+    <link rel="stylesheet" href="styles/index.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <style>
+        .faq-item {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--surface-border);
+            padding-bottom: 1.5rem;
+        }
+        .faq-question {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container flex-between">
+            <div class="logo text-gradient"><a href="index.html" style="display:flex; align-items:center; gap:10px;"><img src="images/logo.png" alt="SyncRide Logo" style="height:40px; border-radius:8px;"> SyncRide</a></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="login.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container animate-fade-in" style="padding: 4rem 0;">
+        <h1 class="text-center" style="margin-bottom: 3rem;">Frequently Asked <span class="text-gradient">Questions</span></h1>
+        
+        <div class="glass-panel" style="max-width: 800px; margin: 0 auto;">
+            
+            <div class="faq-item">
+                <div class="faq-question">How does the ride matching algorithm work?</div>
+                <div class="text-secondary">Our backend database checks your selected Source and Destination against active "Forming" ride groups. It uses a 15-minute overlapping time window algorithm to group you with users heading the same way.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How is the fare calculated?</div>
+                <div class="text-secondary">The total fare is retrieved from integrated platforms like InDrive or Careem based on distance. SyncRide then automatically splits the total fare evenly among all group members in the ride. You can view Fare Estimates in your Dashboard.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I choose my preferred gender for carpooling?</div>
+                <div class="text-secondary">Yes. In your user dashboard under Profile Management, you can toggle "Preferred Gender Matching" to ensure you are only matched with users of your own gender.</div>
+            </div>
+
+            <div class="faq-item" style="border-bottom: none; padding-bottom: 0;">
+                <div class="faq-question">What happens if a driver cancels?</div>
+                <div class="text-secondary">If a driver cancels, the ride group status returns to "Forming", and the SyncRide backend automatically pings the integrated platforms to re-assign a new driver without the group needing to create a new request.</div>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>
